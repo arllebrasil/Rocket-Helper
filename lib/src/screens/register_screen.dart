@@ -17,15 +17,17 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  ValueNotifier<String> chanalOrdersPath = ValueNotifier('');
   TextEditingController patrimonyController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   bool isLoading = false;
 
   void handdleRegiterOrder() {
-    final firestore = FirebaseFirestore.instance;
+    final db = FirebaseFirestore.instance;
+    if(chanalOrdersPath.value.isEmpty) return;
     setState(() => isLoading = true);
-    firestore
-        .collection('orders')
+    db
+        .collection(chanalOrdersPath.value)
         .add(Order(
           patrimony: patrimonyController.text,
           description: descriptionController.text,
@@ -37,6 +39,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    chanalOrdersPath.value =
+        ModalRoute.of(context)?.settings.arguments as String;
+
     return Scaffold(
       backgroundColor: AppColors.stone[600],
       appBar: AppBar(
@@ -81,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
               PrimaryButton(
-                onPressed: handdleRegiterOrder,
+                onPressed:isLoading ? null:handdleRegiterOrder,
                 child: isLoading
                     ? Loader(color: AppColors.stone[100], weigth: 16)
                     : const Text('Cadastrar'),

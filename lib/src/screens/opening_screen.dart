@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:rocket_help/src/screens/canais_screen.dart';
 import 'package:rocket_help/src/screens/orders_screen.dart';
 import 'package:rocket_help/src/screens/signin_screen.dart';
 import 'package:rocket_help/src/screens/splash_screen.dart';
@@ -26,7 +27,7 @@ class _OpeningScreenState extends State<OpeningScreen> {
         }
         if (snapshot.connectionState == ConnectionState.active &&
             snapshot.hasData) {
-          return const OrdersScreen();
+          return const CanaisScreen();
         }
         if (snapshot.hasError) print('HAS ERRO: ${snapshot.error}');
         return const Scaffold(

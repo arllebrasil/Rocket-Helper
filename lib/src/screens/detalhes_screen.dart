@@ -16,18 +16,17 @@ class DetalhesScreen extends StatefulWidget {
 }
 
 class _DetalhesScreenState extends State<DetalhesScreen> {
-  ValueNotifier<String?> orderId = ValueNotifier(null);
+  ValueNotifier<String?> orderPath = ValueNotifier(null);
   Stream<Order>? orderStream;
   late TextEditingController solutionController;
   late GlobalKey<FormState> solutionKey;
 
   Future<void> getOrder() async {
+    if (orderPath.value == null) return;
+    String orderPathState = orderPath.value!;
     setState(
-      () => orderStream = FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId.value)
-          .snapshots()
-          .map(
+      () => orderStream =
+          FirebaseFirestore.instance.doc(orderPathState).snapshots().map(
         (doc) {
           return Order.fromMap(
             {
@@ -41,29 +40,34 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
   }
 
   Future<void> handleSolution(Order order) async {
-    if (orderId.value == null) return;
+    if (orderPath.value == null) return;
     if (!solutionKey.currentState!.validate()) return;
-    FirebaseFirestore.instance
-        .collection('orders')
-        .doc(orderId.value)
-        .update(<String, dynamic>{
-      ...order.toMap(),
-      'solution': solutionController.text,
-      'status': Status.closed.name,
-      'closedAt': format(DateTime.now()),
+    final db = FirebaseFirestore.instance;
+    db.runTransaction<bool>((transaction) async {
+      try {
+        await transaction.update(db.doc(orderPath.value!), {
+          ...order.toMap(),
+          'solution': solutionController.text,
+          'status': Status.closed.name,
+          'closedAt': format(DateTime.now()),
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
     });
   }
 
   @override
   void initState() {
     super.initState();
-    orderId.addListener(getOrder);
+    orderPath.addListener(getOrder);
     getOrder();
   }
 
   @override
   Widget build(BuildContext context) {
-    orderId.value = ModalRoute.of(context)?.settings.arguments as String?;
+    orderPath.value = ModalRoute.of(context)?.settings.arguments as String?;
 
     return Scaffold(
       backgroundColor: AppColors.stone[700],
@@ -214,6 +218,6 @@ class _DetalhesScreenState extends State<DetalhesScreen> {
   @override
   void dispose() {
     super.dispose();
-    orderId.dispose();
+    orderPath.dispose();
   }
 }

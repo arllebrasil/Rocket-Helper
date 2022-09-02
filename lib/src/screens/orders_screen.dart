@@ -19,6 +19,7 @@ class OrdersScreen extends StatefulWidget {
 
 class _OrdersScreenState extends State<OrdersScreen> {
   ValueNotifier<FilterType> filterSelected = ValueNotifier(FilterType.open);
+  ValueNotifier<String> chanalOrdersPath = ValueNotifier('');
   Stream<List<Order>>? ordersStrem;
 
   Future<void> haddleSignOut() async {
@@ -26,9 +27,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   Future<void> getOrders() async {
+    if (chanalOrdersPath.value.isEmpty) return;
     setState(
       () => ordersStrem = FirebaseFirestore.instance
-          .collection('orders')
+          .collection(chanalOrdersPath.value)
           .where('status', isEqualTo: filterSelected.value.name)
           .snapshots()
           .map(
@@ -49,26 +51,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   void initState() {
     super.initState();
+    chanalOrdersPath.addListener(getOrders);
     filterSelected.addListener(getOrders);
     getOrders();
   }
 
   @override
   Widget build(BuildContext context) {
+    chanalOrdersPath.value =
+        ModalRoute.of(context)?.settings.arguments as String;
+
     return Scaffold(
       backgroundColor: AppColors.stone[700],
       appBar: AppBar(
         title: SvgPicture.asset('assets/svg/logo_secondary.svg'),
         backgroundColor: AppColors.stone[600],
-        actions: [
-          IconButton(
-            onPressed: haddleSignOut,
-            icon: Icon(
-              PhosphorIcons.sign_out,
-              color: AppColors.stone[300],
-            ),
-          ),
-        ],
         elevation: 0,
       ),
       body: StreamBuilder<List<Order>>(
@@ -87,9 +84,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     Text(
                       'Solicitações',
                       style: TextStyle(
-                        color: AppColors.stone[100],
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        color: AppColors.stone[100],
+                        fontWeight: FontWeight.w700,
+                        height: 1.6,
                       ),
                     ),
                     Text(
@@ -166,7 +164,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 onTap: () => Navigator.pushNamed(
                                   context,
                                   '/datalhes',
-                                  arguments: order.id,
+                                  arguments:
+                                      '${chanalOrdersPath.value}/${order.id}',
                                 ),
                               ),
                             );
@@ -179,7 +178,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 PrimaryButton(
                   text: 'Nova Solicitação',
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/register');
+                    Navigator.of(context).pushNamed('/register',
+                        arguments: chanalOrdersPath.value);
                   },
                 ),
               ],
